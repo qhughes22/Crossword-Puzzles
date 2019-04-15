@@ -1,4 +1,8 @@
 java: a great programming language
-aaron: the name of a stupid person
+aaron: hockey guy
 gusts: winds innards around end of streets
 python: monty's favorite language
+sister: like a brother but female
+food: thing you eat
+animal: living creature
+steam: water, as gas

@@ -11,7 +11,7 @@ public class Crossword {
     private int acrossCount = 0;
     private int downCount = 0;
 
-    public Crossword(ArrayList<Word> w, int seed, int size) {
+    public Crossword(ArrayList<Word> w, long seed, int size) {
         ArrayList<Word> chooseFrom = new ArrayList<>();
         for (Word word : w)
             chooseFrom.add(word);
@@ -23,23 +23,38 @@ public class Crossword {
             words.add(chooseFrom.get(r));
             chooseFrom.remove(r);
         }
-        Word f = w.get(3);
+        shuffle(w, rand);
+        Word f = w.get(0);
         ChosenWord.direction t;
         if (rand.nextBoolean())
             t = ChosenWord.direction.ACROSS;
         else t = ChosenWord.direction.DOWN;
         placeWord(f.getLetters(), ChosenWord.direction.ACROSS, 500, 500);
         placedWords.add(new ChosenWord(f.getLetters(), f.getClue(), 500, 500, 1, ChosenWord.direction.ACROSS));
-        if (addWord(new Word("peas", "it's pass")) == false) {
-            System.out.println("failed to add word");
+        ArrayList<Integer> failedWords = new ArrayList<Integer>();
+        boolean addedAny=true;
+        for (int i = 1; i < size; i++)
+            if (addWord(w.get(i)) == false) {
+                System.out.println("failed to add " + w.get(i).getLetters());
+                failedWords.add(i);
+            }
+        while(addedAny==true&&failedWords.size()!=0) {
+            addedAny=false;
+            for (int i = 0; i < failedWords.size(); i++) {
+                if (addWord(w.get(failedWords.get(i))) == false)
+                    System.out.println("failed to add " + w.get(failedWords.get(i)).getLetters());
+                else {
+                    failedWords.remove(i);
+                    addedAny = true;
+                }
+            }
         }
-        if (addWord(new Word("no", "dsf")) == false) {
-            System.out.println("failed to add word2");
+        if(failedWords.size()!=0){
+            System.out.println("failed to make puzzle. Word didn't fit");
+            System.out.println("Creating new puzzle.");
+            new Crossword(w,rand.nextLong(),size);
         }
-        if (addWord(new Word("satan", "dsf")) == false) {
-            System.out.println("failed to add word3");
-        }
-        shrinkGrid();
+        else shrinkGrid();
     }
 
     public boolean addWord(Word w) {
@@ -112,23 +127,18 @@ public class Crossword {
         int XLowerBound = grid[0].length;
         int XUpperBound = 0;
         for (ChosenWord c : placedWords) {
-            if (c.getY() < YLowerBound)
+            if (c.getDirection()== ChosenWord.direction.DOWN&&c.getY() < YLowerBound)
                 YLowerBound = c.getY();
-            if (c.getY() + c.getLength() > YUpperBound)
+            if (c.getDirection()== ChosenWord.direction.DOWN&&c.getY() + c.getLength() > YUpperBound)
                 YUpperBound = c.getY() + c.getLength();
-            if (c.getX() < XLowerBound)
+            if (c.getDirection()== ChosenWord.direction.ACROSS&&c.getX() < XLowerBound)
                 XLowerBound = c.getX();
-            if (c.getX() + c.getLength() > XUpperBound)
+            if (c.getDirection()== ChosenWord.direction.ACROSS&&c.getX() + c.getLength() > XUpperBound)
                 XUpperBound = c.getX() + c.getLength();
         }
-        System.out.println(XLowerBound);
-        System.out.println(YLowerBound);
-        System.out.println(YUpperBound);
-        System.out.println(XUpperBound);
-        grid = new Character[Math.max(YUpperBound - YLowerBound,XUpperBound - XLowerBound)][Math.max(YUpperBound - YLowerBound,XUpperBound - XLowerBound)];
+
+        grid = new Character[Math.max(YUpperBound - YLowerBound, XUpperBound - XLowerBound)][Math.max(YUpperBound - YLowerBound, XUpperBound - XLowerBound)];
         for (ChosenWord c : placedWords) {
-            System.out.println(c.getX());
-            System.out.println(c.getY());
             placeWord(c.getLetters(), c.getDirection(), c.getY() - YLowerBound, c.getX() - XLowerBound);
         }
         printMatrix(grid);
@@ -139,7 +149,7 @@ public class Crossword {
             for (int j = 0; j < m[i].length; j++)
                 if (m[i][j] != null)
                     System.out.print(m[i][j]);
-                else System.out.print("0");
+                else System.out.print(" ");
             System.out.println();
         }
     }
@@ -186,4 +196,3 @@ public class Crossword {
         downCount++;
     }
 }
-

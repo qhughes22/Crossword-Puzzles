@@ -1,6 +1,7 @@
 import java.io.FileNotFoundException; //need to implement our own data structure
 import java.io.FileReader; //need to implement timer? speed solving.
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 public class test {
@@ -10,12 +11,10 @@ public class test {
         a[0][1] = 'a';
         a[0][2] = 'b';
         a[1][2] = 'd';
+        Random Rand = new Random();
         Crossword.printMatrix(convertToBlankMatrix(a));
         ArrayList<Word> tester = makeWordsList("src/testwords.txt");
-        for(Word w: tester)
-            System.out.println(w.getClue());
-        Crossword c = new Crossword(tester, 1, 2);
-        ArrayList<Integer> b = Crossword.findLetter("tfgja", 'a');
+        Crossword c = new Crossword(tester, (Rand.nextLong()), 8);
     }
 
 
