@@ -21,12 +21,10 @@ public class placedWord extends Word {
         return d;
     }
 
-    @Deprecated
     public void setX(int a) {
         X = a;
     }
 
-    @Deprecated
     public void setY(int a) {
         Y = a;
     }
