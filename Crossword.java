@@ -1,17 +1,21 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
+
 import static java.util.Collections.shuffle;
 
 
-public class Crossword {
-    Character[][] grid;
-    ArrayList<Word> words = new ArrayList<Word>();
-    ArrayList<ChosenWord> placedWords = new ArrayList<>();
-    Random rand;
-    private int acrossCount = 0;
-    private int downCount = 0;
+public class Crossword { //the class for generating the answers.
+    public static ArrayList<Character> alphabet = new ArrayList<>(Arrays.asList('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'));
+    private Character[][] grid; //stores the final grid
+    private Integer[][] numGrid; //stores the numbers for clues
+    private ArrayList<Word> wordsChosen = new ArrayList<Word>(); //the words selected for the puzzle
+    private ArrayList<placedWord> wordsPlaced = new ArrayList<>(); //the words that have been placed
+    Random rand; //the rand, created by seed
+    int failedWords = 0; //how many words were not added
 
-    public Crossword(ArrayList<Word> w, long seed, int size) {
+
+    public Crossword(ArrayList<Word> w, long seed, int size) { //constructor. Potentially will fail to add every word and simply returns before finishing if that happens.
         ArrayList<Word> chooseFrom = new ArrayList<>();
         for (Word word : w)
             chooseFrom.add(word);
@@ -20,44 +24,56 @@ public class Crossword {
         int r;
         for (int i = 0; i < size; i++) {
             r = rand.nextInt(chooseFrom.size());
-            words.add(chooseFrom.get(r));
+            wordsChosen.add(chooseFrom.get(r));
             chooseFrom.remove(r);
         }
         shuffle(w, rand);
         Word f = w.get(0);
-        ChosenWord.direction t;
+        placedWord.direction t;
         if (rand.nextBoolean())
-            t = ChosenWord.direction.ACROSS;
-        else t = ChosenWord.direction.DOWN;
-        placeWord(f.getLetters(), ChosenWord.direction.ACROSS, 500, 500);
-        placedWords.add(new ChosenWord(f.getLetters(), f.getClue(), 500, 500, 1, ChosenWord.direction.ACROSS));
-        ArrayList<Integer> failedWords = new ArrayList<Integer>();
-        boolean addedAny=true;
+            t = placedWord.direction.ACROSS;
+        else t = placedWord.direction.DOWN;
+        placeWord(f.getLetters(), t, 500, 500);
+        wordsPlaced.add(new placedWord(f.getLetters(), f.getClue(), 500, 500, t));
+        ArrayList<Integer> failedToAdd = new ArrayList<Integer>();
+        boolean addedAny = true;
         for (int i = 1; i < size; i++)
             if (addWord(w.get(i)) == false) {
                 System.out.println("failed to add " + w.get(i).getLetters());
-                failedWords.add(i);
+                failedToAdd.add(i);
             }
-        while(addedAny==true&&failedWords.size()!=0) {
-            addedAny=false;
-            for (int i = 0; i < failedWords.size(); i++) {
-                if (addWord(w.get(failedWords.get(i))) == false)
-                    System.out.println("failed to add " + w.get(failedWords.get(i)).getLetters());
+        while (addedAny == true && failedToAdd.size() != 0) {
+            addedAny = false;
+            for (int i = 0; i < failedToAdd.size(); i++) {
+                if (addWord(w.get(failedToAdd.get(i))) == false)
+                    System.out.println("failed to add " + w.get(failedToAdd.get(i)).getLetters());
                 else {
-                    failedWords.remove(i);
+                    failedToAdd.remove(i);
                     addedAny = true;
                 }
             }
+            failedWords = failedToAdd.size();
+            if (failedWords > 0) return;
         }
-        if(failedWords.size()!=0){
-            System.out.println("failed to make puzzle. Word didn't fit");
-            System.out.println("Creating new puzzle.");
-            new Crossword(w,rand.nextLong(),size);
-        }
-        else shrinkGrid();
+        shrinkGrid();
+        numGrid = new Integer[grid.length][grid[0].length];
+        int num = 0;
+        for (int i = 0; i < grid.length; i++)
+            for (int j = 0; j < grid[i].length; j++) {
+                for (placedWord p : wordsPlaced) {
+                    if (p.getX() == j && p.getY() == i) {
+                        if (numGrid[i][j] == null) {
+                            num++;
+                            numGrid[i][j] = num;
+                            p.setCN(num);
+                        } else p.setCN(num);
+                    }
+                }
+            }
     }
 
-    public boolean addWord(Word w) {
+
+    private boolean addWord(Word w) {
         ArrayList<Character> letters = new ArrayList<Character>();
         ArrayList<Pair<Integer, Integer>> possibilities = new ArrayList<>();
         ArrayList<Integer> letNum = new ArrayList<>();
@@ -80,28 +96,28 @@ public class Crossword {
             shuffle(possibilities, rand);
             ArrayList<Integer> occurrences = findLetter(w.getLetters(), c);
             shuffle(occurrences, rand);
-            for (Pair<Integer, Integer> p : possibilities)
+            for (Pair<Integer, Integer> p : possibilities) //this section will place the word if possible in every potential location. There is duplicate code because it randomizes whether it tries to place down or across first
                 for (Integer x : occurrences) {
                     if (rand.nextBoolean()) {
-                        if (checkLocation(p.get1() - x, p.get2(), ChosenWord.direction.DOWN, w)) {
-                            placeWord(w.getLetters(), ChosenWord.direction.DOWN, p.get1() - x, p.get2());
-                            placedWords.add(new ChosenWord(w.getLetters(), w.getClue(), p.get1() - x, p.get2(), 3, ChosenWord.direction.DOWN));
+                        if (checkLocation(p.get1() - x, p.get2(), placedWord.direction.DOWN, w)) {
+                            placeWord(w.getLetters(), placedWord.direction.DOWN, p.get1() - x, p.get2());
+                            wordsPlaced.add(new placedWord(w.getLetters(), w.getClue(), p.get1() - x, p.get2(), placedWord.direction.DOWN));
                             return true;
                         }
-                        if (checkLocation(p.get1(), p.get2() - x, ChosenWord.direction.ACROSS, w)) {
-                            placeWord(w.getLetters(), ChosenWord.direction.ACROSS, p.get1(), p.get2() - x);
-                            placedWords.add(new ChosenWord(w.getLetters(), w.getClue(), p.get1(), p.get2() - x, 3, ChosenWord.direction.ACROSS));
+                        if (checkLocation(p.get1(), p.get2() - x, placedWord.direction.ACROSS, w)) {
+                            placeWord(w.getLetters(), placedWord.direction.ACROSS, p.get1(), p.get2() - x);
+                            wordsPlaced.add(new placedWord(w.getLetters(), w.getClue(), p.get1(), p.get2() - x, placedWord.direction.ACROSS));
                             return true;
                         }
                     } else {
-                        if (checkLocation(p.get1(), p.get2() - x, ChosenWord.direction.ACROSS, w)) {
-                            placeWord(w.getLetters(), ChosenWord.direction.ACROSS, p.get1(), p.get2() - x);
-                            placedWords.add(new ChosenWord(w.getLetters(), w.getClue(), p.get1(), p.get2() - x, 3, ChosenWord.direction.ACROSS));
+                        if (checkLocation(p.get1(), p.get2() - x, placedWord.direction.ACROSS, w)) {
+                            placeWord(w.getLetters(), placedWord.direction.ACROSS, p.get1(), p.get2() - x);
+                            wordsPlaced.add(new placedWord(w.getLetters(), w.getClue(), p.get1(), p.get2() - x, placedWord.direction.ACROSS));
                             return true;
                         }
-                        if (checkLocation(p.get1() - x, p.get2(), ChosenWord.direction.DOWN, w)) {
-                            placeWord(w.getLetters(), ChosenWord.direction.DOWN, p.get1() - x, p.get2());
-                            placedWords.add(new ChosenWord(w.getLetters(), w.getClue(), p.get1() - x, p.get2(), 3, ChosenWord.direction.DOWN));
+                        if (checkLocation(p.get1() - x, p.get2(), placedWord.direction.DOWN, w)) {
+                            placeWord(w.getLetters(), placedWord.direction.DOWN, p.get1() - x, p.get2());
+                            wordsPlaced.add(new placedWord(w.getLetters(), w.getClue(), p.get1() - x, p.get2(), placedWord.direction.DOWN));
                             return true;
                         }
                     }
@@ -111,7 +127,7 @@ public class Crossword {
     }
 
 
-    public static ArrayList<Integer> findLetter(String s, Character c) {
+    private static ArrayList<Integer> findLetter(String s, Character c) { //method to find occurrences of a particular character in a String
         ArrayList<Integer> occurrences = new ArrayList<Integer>();
         String t = s;
         while (t.lastIndexOf(c) != -1) {
@@ -121,30 +137,32 @@ public class Crossword {
         return occurrences;
     }
 
-    public void shrinkGrid() { //makes into squares.
+    private void shrinkGrid() { //shrinks the grid down to minimum possible square
         int YLowerBound = grid.length;
         int YUpperBound = 0;
         int XLowerBound = grid[0].length;
         int XUpperBound = 0;
-        for (ChosenWord c : placedWords) {
-            if (c.getDirection()== ChosenWord.direction.DOWN&&c.getY() < YLowerBound)
+        for (placedWord c : wordsPlaced) {
+            if (c.getDirection() == placedWord.direction.DOWN && c.getY() < YLowerBound)
                 YLowerBound = c.getY();
-            if (c.getDirection()== ChosenWord.direction.DOWN&&c.getY() + c.getLength() > YUpperBound)
+            if (c.getDirection() == placedWord.direction.DOWN && c.getY() + c.getLength() > YUpperBound)
                 YUpperBound = c.getY() + c.getLength();
-            if (c.getDirection()== ChosenWord.direction.ACROSS&&c.getX() < XLowerBound)
+            if (c.getDirection() == placedWord.direction.ACROSS && c.getX() < XLowerBound)
                 XLowerBound = c.getX();
-            if (c.getDirection()== ChosenWord.direction.ACROSS&&c.getX() + c.getLength() > XUpperBound)
+            if (c.getDirection() == placedWord.direction.ACROSS && c.getX() + c.getLength() > XUpperBound)
                 XUpperBound = c.getX() + c.getLength();
         }
 
         grid = new Character[Math.max(YUpperBound - YLowerBound, XUpperBound - XLowerBound)][Math.max(YUpperBound - YLowerBound, XUpperBound - XLowerBound)];
-        for (ChosenWord c : placedWords) {
+        ArrayList<placedWord> shrunkPlaced = new ArrayList<>();
+        for (placedWord c : wordsPlaced) {
             placeWord(c.getLetters(), c.getDirection(), c.getY() - YLowerBound, c.getX() - XLowerBound);
+            shrunkPlaced.add(new placedWord(c.getLetters(), c.getClue(), c.getY() - YLowerBound, c.getX() - XLowerBound, c.getDirection()));
         }
-        printMatrix(grid);
+        wordsPlaced = shrunkPlaced;
     }
 
-    public static <E> void printMatrix(E[][] m) {
+    public static <E> void printMatrix(E[][] m) { //method to print matrix, with null values being printed as spaces. Used for testing
         for (int i = 0; i < m.length; i++) {
             for (int j = 0; j < m[i].length; j++)
                 if (m[i][j] != null)
@@ -154,8 +172,8 @@ public class Crossword {
         }
     }
 
-    public boolean checkLocation(int y, int x, ChosenWord.direction d, Word w) {
-        if (d == ChosenWord.direction.ACROSS) {
+    private boolean checkLocation(int y, int x, placedWord.direction d, Word w) { //method to determine if a particular word can be placed in a location
+        if (d == placedWord.direction.ACROSS) {
             if (grid[y][x - 1] != null || grid[y][x + w.getLength()] != null)
                 return false;
             for (int i = 0; i < w.getLength(); i++)
@@ -165,7 +183,7 @@ public class Crossword {
                 } else if (grid[y][x + i] != w.getLetters().charAt(i))
                     return false;
         }
-        if (d == ChosenWord.direction.DOWN) {
+        if (d == placedWord.direction.DOWN) {
             if (grid[y - 1][x] != null || grid[y + w.getLength()][x] != null)
                 return false;
             for (int i = 0; i < w.getLength(); i++)
@@ -178,8 +196,8 @@ public class Crossword {
         return true;
     }
 
-    public void placeWord(String letters, ChosenWord.direction dir, int yPos, int xPos) {
-        if (dir == ChosenWord.direction.DOWN) {
+    private void placeWord(String letters, placedWord.direction dir, int yPos, int xPos) { //method that places a word on the grid
+        if (dir == placedWord.direction.DOWN) {
             for (int i = 0; i < letters.length(); i++) {
                 grid[yPos + i][xPos] = letters.charAt(i);
             }
@@ -188,11 +206,12 @@ public class Crossword {
         }
     }
 
-    public void addAcross() {
-        acrossCount++;
+
+    public Character[][] getGrid() {
+        return grid;
     }
 
-    public void addDown() {
-        downCount++;
+    public Integer[][] getNumGrid() {
+        return numGrid;
     }
 }
