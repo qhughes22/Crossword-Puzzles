@@ -7,6 +7,10 @@ import javax.swing.*;
 import java.awt.Graphics;
 import javax.swing.JPanel;
 import javax.swing.JFrame;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -23,15 +27,50 @@ public class Puzzle3 extends JPanel implements ActionListener {
     private static Crossword c;
     private static ArrayList<JTextField> textFields = new ArrayList<>();
 
+    public static JTextField createFilteredField(String text, int columns) {    //this method was adapted from code found here: https://stackoverflow.com/questions/24844559/jtextfield-using-document-filter-to-filter-integers-and-periods
+        JTextField field = new JTextField(text, columns);
+        AbstractDocument document = (AbstractDocument) field.getDocument();
+        final int maxCharacters = 1;
+        document.setDocumentFilter(new DocumentFilter() {
+            public void replace(FilterBypass fb, int offs, int length,
+                                String str, AttributeSet a) throws BadLocationException {
+                String text = fb.getDocument().getText(0,
+                        fb.getDocument().getLength());
+                text += str;
+                if ((fb.getDocument().getLength() + str.length() - length) <= maxCharacters
+                        && (text.matches("[a-z]")||text.matches("[A-Z]"))) {
+                    super.replace(fb, offs, length, str.toUpperCase(), a);
+                } else {
+                    Toolkit.getDefaultToolkit().beep();
+                }
+            }
+
+            @Override
+            public void insertString(FilterBypass fb, int offs, String str,
+                                     AttributeSet a) throws BadLocationException {
+
+                String text = fb.getDocument().getText(0,
+                        fb.getDocument().getLength());
+                text += str;
+                if ((fb.getDocument().getLength() + str.length()) <= maxCharacters
+                        && (text.matches("[a-z]")||text.matches("[A-Z]"))) {
+                    super.insertString(fb, offs, str.toUpperCase(), a);
+                } else {
+                    Toolkit.getDefaultToolkit().beep();
+                }
+            }
+        });
+        return field;
+    }
 
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
         if (src == save) {
-            Crossword.printMatrix(convertToMatrix());
+            // Crossword.printMatrix(convertToMatrix()); //test code
             savetest.savePuzzle(new int[]{c.getSeed(), c.getSize()}, convertToMatrix(), "testsave.txt");
             System.out.println("Puzzle saved successfully");
         } else if (src == otherButton) {
-           convertMatrixToGrid(savetest.loadSave("testsave.txt",c.goalSize,c.goalSize).get1());
+            convertMatrixToGrid(savetest.loadSave("testsave.txt", c.goalSize + 2, c.goalSize + 2).get1());
             System.out.println("You pressed the other button.");
         } else {
             JTextField jt = (JTextField) e.getSource();
@@ -72,9 +111,9 @@ public class Puzzle3 extends JPanel implements ActionListener {
         super.paintComponent(g);
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, WIDTH, HEIGHT);
-        ArrayList<JTextField> jt = new ArrayList<>();    //this temporary arraylist may not be necessary, but we included it to protect from changing textFields while it is in use
+        ArrayList<JTextField> tempFields = new ArrayList<>();    //this temporary arraylist may not be necessary, but we included it to protect from changing textFields while it is in use
         save.setBounds(800, 100, 100, 100);
-        otherButton.setBounds(800,300,100,100);
+        otherButton.setBounds(800, 300, 100, 100);
         frame.add(save);
         frame.add(otherButton);
         int counter = 0;
@@ -88,13 +127,13 @@ public class Puzzle3 extends JPanel implements ActionListener {
                 }
 
                 if (g.getColor() == Color.WHITE) {
-                    jt.add(new JTextField("", 900 / NUM_SQUARES));
-                    jt.get(counter).setBounds(j * 900 / NUM_SQUARES, i * HEIGHT / NUM_SQUARES, 900 / NUM_SQUARES, 900 / NUM_SQUARES);
+                    tempFields.add(createFilteredField("", 900/NUM_SQUARES));
+                    tempFields.get(counter).setBounds(j * 900 / NUM_SQUARES, i * HEIGHT / NUM_SQUARES, 900 / NUM_SQUARES, 900 / NUM_SQUARES);
                     Font font = new Font("Courier", Font.BOLD, 900 / NUM_SQUARES);
-                    jt.get(counter).setFont(font);
-                    jt.get(counter).setHorizontalAlignment(JTextField.CENTER);
-                    jt.get(counter).addActionListener(this);
-                    frame.add(jt.get(counter));
+                    tempFields.get(counter).setFont(font);
+                    tempFields.get(counter).setHorizontalAlignment(JTextField.CENTER);
+                    tempFields.get(counter).addActionListener(this);
+                    frame.add(tempFields.get(counter));
                     counter++;
                 } else {
                     g.drawRect(j * 900 / NUM_SQUARES, i * HEIGHT / NUM_SQUARES, (j + 1) * 900 / NUM_SQUARES, (i + 1) * HEIGHT / NUM_SQUARES);
@@ -103,7 +142,7 @@ public class Puzzle3 extends JPanel implements ActionListener {
                 }
             }
         }
-        textFields = jt;
+        textFields = tempFields;
         for (JTextField j : textFields)
             j.setEditable(true);
     }
@@ -121,7 +160,7 @@ public class Puzzle3 extends JPanel implements ActionListener {
         return m;
     }
 
-    public static boolean checkBadOverlap(int i, int j){
+    public static boolean checkBadOverlap(int i, int j) {
         for (JTextField jt : textFields) {
             Point p = jt.getLocation(); //Gets location of the textfield as a point
             int div = (900 / NUM_SQUARES);
@@ -129,24 +168,36 @@ public class Puzzle3 extends JPanel implements ActionListener {
             int x = temp_x.intValue();
             Double temp_y = p.getY() / div; //Gets y-coordinate of point (which square)
             int y = temp_y.intValue();
-            if(i==y&&x==j)
+            if (i == y && x == j)
                 return false;
         }
         return true;
     }
 
-    public static void convertMatrixToGrid(Character[][] matrix){
+    public static void convertMatrixToGrid(Character[][] matrix) {
         try {
             for (int i = 0; i < matrix.length; i++) //these loops take every non-null value in matrix and make sure that there is a textfield corresponding to its location
                 for (int j = 0; j < matrix[0].length; j++)
                     if (matrix[i][j] != null) {
-                        if(checkBadOverlap(i,j))
+                        if (checkBadOverlap(i, j))
                             throw new BadLetterException();
                     }
-        } catch(BadLetterException e) {
+        } catch (BadLetterException e) {
             System.out.println("Error. Load failed. Letter in matrix where it shouldn't be.\nYour save file is corrupted, sorry.");
+            return;
         }
-
+        for (JTextField jt : textFields) {
+            Point p = jt.getLocation(); //Gets location of the textfield as a point
+            int div = (900 / NUM_SQUARES);
+            Double temp_x = p.getX() / div; //Gets x-coordinate of point (which square)
+            int x = temp_x.intValue();
+            Double temp_y = p.getY() / div; //Gets y-coordinate of point (which square)
+            int y = temp_y.intValue();
+            String t;
+            if (matrix[y][x] == null) t = "";
+            else t = matrix[y][x].toString();
+            jt.setText(t);
+        }
     }
 
     public static Character[][] convertToMatrix() {
@@ -154,7 +205,7 @@ public class Puzzle3 extends JPanel implements ActionListener {
         System.out.println("convertToMatrix run.");
         for (JTextField jt : textFields) {
             if (!jt.getText().equals("")) {
-                System.out.println("got one."); //to test that this if statement works. It has been finnicky.
+                System.out.println("letter found."); //Test code
                 Character c = jt.getText().charAt(0); //Gets the text in the textfield
                 Point p = jt.getLocation(); //Gets location of the textfield as a point
                 int div = (900 / NUM_SQUARES);

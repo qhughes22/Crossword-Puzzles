@@ -85,13 +85,11 @@ public class Crossword { //the class for generating the answers.
             }
     }
 
-    private void growGrid() {//grows the grid into the correct size
-        if(grid.length==goalSize&&grid[0].length==goalSize)
-            return;
-        Character[][] grownGrid = new Character[goalSize][goalSize];
+    private void growGrid() {//grows the grid into the correct size. Leaves the first row and first column empty as buffer
+        Character[][] grownGrid = new Character[goalSize+2][goalSize+2];
         for(int i=0;i<grid.length;i++)
             for(int j=0;j<grid[0].length;j++)
-                grownGrid[i][j]=grid[i][j];
+                grownGrid[i+1][j+1]=grid[i][j];
         grid=grownGrid;
     }
 

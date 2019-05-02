@@ -56,7 +56,7 @@ public class savetest {
                 for (int j = 0; j < y; j++) {
                     if (t.charAt(j) == '0')
                         charToReturn[i][j] = null;
-                    else if(Crossword.alphabet.lastIndexOf(t.charAt(j))==-1)
+                    else if(!Character.toString(t.charAt(j)).matches("[A-Z]"))
                         throw new IllegalArgumentException();
                     else charToReturn[i][j] = t.charAt(j);
                 }

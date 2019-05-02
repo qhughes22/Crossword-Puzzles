@@ -5,7 +5,7 @@ public class Word {
 
     public Word(String l, String c) {
         clue = c;
-        letters = l;
+        letters = l.toUpperCase();
         length = letters.length();
     }
 
