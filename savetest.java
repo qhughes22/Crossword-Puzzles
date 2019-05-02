@@ -9,7 +9,7 @@ public class savetest {
     public static void main(String[] args) {
         Scanner keyboard=new Scanner(System.in);
         int s = keyboard.nextInt();
-        if(s==1) { 
+        if(s==1) {
             Character[][] test = new Character[5][5];
             test[0][1] = 'a';
             test[4][0] = 'b';

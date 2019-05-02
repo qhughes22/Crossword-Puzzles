@@ -13,7 +13,7 @@ public class test {
             newPuzzle();
     }
 
-    public static void newPuzzle() {  //method for creating a new puzzle
+    public static Crossword newPuzzle() {  //method for creating a new puzzle
         Scanner keyboard = new Scanner(System.in);
         String fileChosen = selectFile("wordfiles");
         ArrayList<Word> tester = makeWordsList("wordfiles/" + fileChosen);
@@ -49,8 +49,11 @@ public class test {
         Crossword c = makeFullCrossWord(tester, seed, size);
         Crossword.printMatrix(c.getGrid());              //test code
         Crossword.printMatrix(c.getNumGrid());           //test code
+        System.out.println(c.getGrid().length);
+        System.out.println(c.getGrid()[0].length);
 //        for (placedWord p : c.placedWords)          //test code
 //           System.out.println(p.getCN());          //test code
+        return c;
     }
 
     public static String selectFile(String t) { //method that prompts the user to select a file and returns the filename.
@@ -83,8 +86,11 @@ public class test {
     public static Crossword makeFullCrossWord(ArrayList<Word> w, long seed, int size) { //this method keeps making crosswords until it creates one that uses all words.
         int timesTried = 0; //the number of times a puzzle has been attempted. This is so that the program doesn't run forever when it can't generate a puzzle
         Crossword c = new Crossword(w, seed, size);
-        while (c.failedWords != 0) {
-            System.out.println("failed to make puzzle. Word(s) didn't fit");
+        while (c.failed == true) {
+            System.out.print("failed to make puzzle.");
+            if(c.failedWords>0)
+                System.out.println(" Words didn't fit.");
+            else System.out.println(" Puzzle was too big.");
             System.out.println("Creating new puzzle.");
             timesTried++;
             if (timesTried < 50) {
