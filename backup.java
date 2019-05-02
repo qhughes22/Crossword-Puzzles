@@ -135,11 +135,11 @@
 //        printMatrix(grid);
 //    }
 //
-//    public static <E> void printMatrix(E[][] m) {
-//        for (int i = 0; i < m.length; i++) {
-//            for (int j = 0; j < m[i].length; j++)
-//                if (m[i][j] != null)
-//                    System.out.print(m[i][j]);
+//    public static <E> void printMatrix(E[][] answerGrid) {
+//        for (int i = 0; i < answerGrid.length; i++) {
+//            for (int j = 0; j < answerGrid[i].length; j++)
+//                if (answerGrid[i][j] != null)
+//                    System.out.print(answerGrid[i][j]);
 //                else System.out.print("0");
 //            System.out.println();
 //        }
@@ -344,11 +344,11 @@
 //        printMatrix(grid);
 //    }
 //
-//    public static <E> void printMatrix(E[][] m) { //method to print matrix, with null values being printed as spaces. Used for testing
-//        for (int i = 0; i < m.length; i++) {
-//            for (int j = 0; j < m[i].length; j++)
-//                if (m[i][j] != null)
-//                    System.out.print(m[i][j]);
+//    public static <E> void printMatrix(E[][] answerGrid) { //method to print matrix, with null values being printed as spaces. Used for testing
+//        for (int i = 0; i < answerGrid.length; i++) {
+//            for (int j = 0; j < answerGrid[i].length; j++)
+//                if (answerGrid[i][j] != null)
+//                    System.out.print(answerGrid[i][j]);
 //                else System.out.print(" ");
 //            System.out.println();
 //        }

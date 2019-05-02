@@ -9,14 +9,14 @@ public class savetest {
     public static void main(String[] args) {
         Scanner keyboard=new Scanner(System.in);
         int s = keyboard.nextInt();
-        if(s==1) { 
+        if(s==1) {
             Character[][] test = new Character[5][5];
             test[0][1] = 'a';
             test[4][0] = 'b';
-            savePuzzle(new int[]{1, 2, 3}, test, "testsave");
+            savePuzzle(new int[]{1, 2, 3}, test, "testsave.txt");
         }
         else {
-            Pair<Character[][], ArrayList<Integer>> loaded = loadSave("testsave", 5, 5);
+            Pair<Character[][], ArrayList<Integer>> loaded = loadSave("testsave.txt", 5, 5);
             Crossword.printMatrix(loaded.get1());
             for (Integer n : loaded.get2())
                 System.out.println(n);
@@ -25,7 +25,7 @@ public class savetest {
 
     public static void savePuzzle(int[] a, Character[][] toSave, String filename) { //method that saves a puzzle to a txt file.
         try {
-            Writer save = new FileWriter(filename);
+            Writer save = new FileWriter(filename, false);
             for (int i = 0; i < toSave.length; i++) {
                 for (int j = 0; j < toSave[i].length; j++) {
                     if (toSave[i][j] == null)
