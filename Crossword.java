@@ -84,13 +84,8 @@ public class Crossword { //the class for generating the answers.
                     }
                 }
             }
-        for (int i = 0; i < numGrid.length; i++) {
-            for (int j = 0; j < numGrid[i].length; j++)
-                System.out.print(numGrid[i][j]);
-            System.out.println();
         }
-        System.out.println();
-    }
+
 
     private void growGrid() {//grows the grid into the correct size. Leaves the first row and first column empty as buffer
         Character[][] grownGrid = new Character[goalSize+2][goalSize+2];
@@ -252,6 +247,9 @@ public class Crossword { //the class for generating the answers.
 
     public int getSeed(){
         return seed;
+    }
+
+    public ArrayList<placedWord> getWordsPlaced(){return wordsPlaced;
     }
 }
 

@@ -33,6 +33,7 @@ public class Puzzle extends JPanel implements ActionListener {
     private static ArrayList<JTextField> textFields = new ArrayList<>();
     private static int timeStarted;
     private static JTextField name = new JTextField();
+    private static int hintCount;
 
     public static JTextField createFilteredField(String text, int columns) {    //this method was adapted from code found here: https://stackoverflow.com/questions/24844559/jtextfield-using-document-filter-to-filter-integers-and-periods
         JTextField field = new JTextField(text, columns);
@@ -75,9 +76,13 @@ public class Puzzle extends JPanel implements ActionListener {
             jt.setForeground(Color.BLACK);
         Object src = e.getSource();
         if (src == save) {
-            // Crossword.printMatrix(convertToMatrix()); //test code
-            savePuzzle(new int[]{Crossword.originalSeed, c.getSize(), (int) (System.currentTimeMillis()) - timeStarted}, convertToMatrix(), "savegames/testsave.txt");
-            System.out.println("Puzzle saved successfully");
+            String saveTo;
+            if (name.getText().length() == 0)
+                saveTo = "default";
+            else
+                saveTo = name.getText();
+            savePuzzle(new int[]{Crossword.originalSeed, c.getSize(), (int) (System.currentTimeMillis()) - timeStarted, hintCount}, convertToMatrix(), "savegames/" + saveTo + ".txt");
+            System.out.println("Puzzle saved (unless something else says otherwise).");
         } else if (src == otherButton) {
             System.out.println(checkAnswers());
         } else if (src == Button3) {
@@ -101,6 +106,8 @@ public class Puzzle extends JPanel implements ActionListener {
         int y = getCoords(jt)[1];
         jt.setText(answerGrid[y][x].toString());
         jt.setForeground(Color.GREEN);
+        hintCount++;
+        System.out.println("You asked for hint number " + hintCount + ".");
     }
 
 
@@ -163,7 +170,7 @@ public class Puzzle extends JPanel implements ActionListener {
 
     @Override
     public void paintComponent(Graphics g) {
-     //   System.out.println("paintComponent run.");       //test code
+        //   System.out.println("paintComponent run.");       //test code
         answerGrid = c.getGrid();
         super.paintComponent(g);
         g.setColor(Color.BLACK);
@@ -223,13 +230,13 @@ public class Puzzle extends JPanel implements ActionListener {
     }
 
 
-    public static void getClues(placedWord.direction d) {
+    public static ArrayList<Pair<Integer, String>> getClues(placedWord.direction d) {
         ArrayList<Pair<Integer, String>> clueList = new ArrayList<>();
         for (placedWord p : c.getWordsPlaced())
             if (p.getDirection() == d)
                 clueList.add(new Pair<Integer, String>(p.getCN(), p.getClue()));
-            for(Pair<Integer, String> p: clueList)
-                System.out.println(p.get1());
+        for (Pair<Integer, String> p : clueList)
+            System.out.println(p.get1());
         Collections.sort(clueList, new Comparator<Pair<Integer, String>>() {
             @Override
             public int compare(Pair<Integer, String> o1, Pair<Integer, String> o2) {
@@ -240,8 +247,9 @@ public class Puzzle extends JPanel implements ActionListener {
                 else return 0;
             }
         });
-        for(Pair<Integer, String> p: clueList)
+        for (Pair<Integer, String> p : clueList)
             System.out.println(p.get1());
+        return clueList;
     }
 
     public static boolean textFieldHere(int a, int b) {
@@ -286,7 +294,7 @@ public class Puzzle extends JPanel implements ActionListener {
                             throw new BadLetterException();
                     }
         } catch (BadLetterException e) {
-            System.out.println("Error. Load failed. Letter in matrix where it shouldn't be.\nYour save file is corrupted, sorry.");
+            System.out.println("Error. Load failed. Letter in matrix where it shouldn't be.\nYour save file is corrupted or you used a different wordfile from the original.");
             return;
         }
         for (JTextField jt : textFields) {
@@ -301,10 +309,10 @@ public class Puzzle extends JPanel implements ActionListener {
 
     public static Character[][] convertToMatrix() {
         Character[][] toReturn = new Character[c.getGrid().length][c.getGrid()[0].length];
-        System.out.println("convertToMatrix run.");
+    //    System.out.println("convertToMatrix run."); //test code
         for (JTextField jt : textFields) {
             if (!jt.getText().equals("")) {
-                System.out.println("letter found."); //Test code
+    //            System.out.println("letter found."); //Test code
                 Character c = jt.getText().charAt(0); //Gets the text in the textfield
                 int x = getCoords(jt)[0];
                 int y = getCoords(jt)[1];
@@ -324,9 +332,16 @@ public class Puzzle extends JPanel implements ActionListener {
         String saveFile = selectFile("savegames");
         Pair<Character[][], ArrayList<Integer>> loaded = loadSave("savegames/" + saveFile, Crossword.goalSize + 2, Crossword.goalSize + 2);
         ArrayList<Integer> loadedInts = loaded.get2();
-        System.out.println(loadedInts.get(0));
-        System.out.println(loadedInts.get(1));
         c = makeFullCrossWord(tester, loadedInts.get(0), loadedInts.get(1));
+        try {
+            System.out.println(loadedInts.get(0));
+            System.out.println(loadedInts.get(1));
+            System.out.println(loadedInts.get(2));
+            System.out.println(loadedInts.get(3));
+            hintCount = loadedInts.get(3);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            hintCount = 0;
+        }
         loadedMatrix = loaded.get1();
         timeStarted = timeStarted - loadedInts.get(2);
     }
@@ -485,6 +500,14 @@ public class Puzzle extends JPanel implements ActionListener {
             Scanner in = new Scanner(new FileReader(filename));
             while (in.hasNextLine()) {
                 t = in.nextLine();
+                String word = t.split(": ")[0];
+                String clue = t.split(": ")[1];
+                if (word.length() > Crossword.goalSize)
+                    throw new IllegalArgumentException();
+                if (clue.length() > 40) {
+                    clue = clue.substring(0, 39);
+                    System.out.println("A clue was too long and was truncated.");
+                }
                 fullList.add(new Word(t.split(": ")[0], t.split(": ")[1]));
             }
         } catch (
@@ -493,6 +516,9 @@ public class Puzzle extends JPanel implements ActionListener {
             System.exit(1);
         } catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Looks like you don't have colons between words and definitions. \nOr there's another bug in the word file.");
+            System.exit(1);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Looks like one of your words is too big. Check the file.");
             System.exit(1);
         }
         return fullList;
@@ -517,7 +543,7 @@ public class Puzzle extends JPanel implements ActionListener {
             }
             save.close();
         } catch (IOException e) {
-            System.out.println("Error! IOException, failed to save.");
+            System.out.println("Error! IOException, failed to save.\nCheck that the filename you wrote has no punctuation or strange symbols.");
         }
     }
 
@@ -551,10 +577,8 @@ public class Puzzle extends JPanel implements ActionListener {
             System.out.println("Error in grid in saved file (found a character that shouldn't be there). \nSorry, but something seems to have corrupted it.");
             System.exit(1);
         }
-        Crossword.printMatrix(charToReturn);
-        System.out.println(intToReturn.size());
+     //   Crossword.printMatrix(charToReturn); //test code
+     //   System.out.println(intToReturn.size()); //test code
         return new Pair<>(charToReturn, intToReturn);
     }
-
-
 }
