@@ -14,7 +14,8 @@ public class Crossword { //the class for generating the answers.
     Random rand; //the rand, created by seed
     int failedWords = 0; //how many words were not added
     boolean failed = false; //whether it failed, either due to words not added or the grid being too big
-    final int goalSize = 20; //this is the size of the matrix that the graphics is expecting to receive
+    final static int goalSize = 20; //this is the size of the matrix that the graphics is expecting to receive
+    public static int originalSeed;
     private int seed; //stores the seed. Need to store for save/otherButton function
 
     public Crossword(ArrayList<Word> w, int seed, int size) { //constructor. Potentially will fail to add every word and simply returns before finishing if that happens.
