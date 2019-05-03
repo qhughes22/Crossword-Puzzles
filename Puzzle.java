@@ -18,7 +18,7 @@ import java.awt.Font;
 
 public class Puzzle extends JPanel implements ActionListener {
 
-    private static final int WIDTH = 1000;
+    private static final int WIDTH = 1200;
     private static Random rand = new Random();
     private static final int HEIGHT = 900;
     private static int NUM_SQUARES = 22;
@@ -32,6 +32,7 @@ public class Puzzle extends JPanel implements ActionListener {
     private static Crossword c;
     private static ArrayList<JTextField> textFields = new ArrayList<>();
     private static int timeStarted;
+    private static JTextField name = new JTextField();
 
     public static JTextField createFilteredField(String text, int columns) {    //this method was adapted from code found here: https://stackoverflow.com/questions/24844559/jtextfield-using-document-filter-to-filter-integers-and-periods
         JTextField field = new JTextField(text, columns);
@@ -162,15 +163,15 @@ public class Puzzle extends JPanel implements ActionListener {
 
     @Override
     public void paintComponent(Graphics g) {
-        //System.out.println("paintComponent run.");       //test code
+     //   System.out.println("paintComponent run.");       //test code
         answerGrid = c.getGrid();
         super.paintComponent(g);
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, WIDTH, HEIGHT);
         ArrayList<JTextField> tempFields = new ArrayList<>();    //this temporary arraylist may not be necessary, but we included it to protect from changing textFields while it is in use
-        save.setBounds(800, 100, 100, 100);
-        otherButton.setBounds(800, 300, 100, 100);
-        Button3.setBounds(800, 500, 100, 100);
+        save.setBounds(950, 250, 200, 100);
+        otherButton.setBounds(950, 150, 200, 100);
+        Button3.setBounds(950, 50, 200, 100);
         frame.add(save);
         frame.add(otherButton);
         frame.add(Button3);
@@ -199,6 +200,8 @@ public class Puzzle extends JPanel implements ActionListener {
 
                 }
             }
+            name.setBounds(950, 375, 200, 30);
+            frame.add(name);
         }
         textFields = tempFields;
         for (JTextField j : textFields)
@@ -209,14 +212,36 @@ public class Puzzle extends JPanel implements ActionListener {
                 if (t[i][j] == 0) {
                 } else if (textFieldHere(i - 1, j)) {
                     g.setColor(Color.WHITE);
-                    g.drawString(String.valueOf(t[i][j]), (j * 900 / NUM_SQUARES) - 10, (i * 900 / NUM_SQUARES) + 10);  //If Field Has Another Field Above It, Print Numbers On Side
+                    g.drawString(String.valueOf(t[i][j]), (j * 900 / NUM_SQUARES) - 15, (i * 900 / NUM_SQUARES) + 10);  //If Field Has Another Field Above It, Print Numbers On Side
                 } else {
                     g.setColor(Color.WHITE);
-                    g.drawString(String.valueOf(t[i][j]), j * 900 / NUM_SQUARES, i * HEIGHT / NUM_SQUARES);  //Otherwise Print Above Top Left Corner
+                    g.drawString(String.valueOf(t[i][j]), j * 900 / NUM_SQUARES, (i * HEIGHT / NUM_SQUARES) - 5);  //Otherwise Print Above Top Left Corner
                 }
             }
         }
         if (loaded == true) convertMatrixToGrid(loadedMatrix);
+    }
+
+
+    public static void getClues(placedWord.direction d) {
+        ArrayList<Pair<Integer, String>> clueList = new ArrayList<>();
+        for (placedWord p : c.getWordsPlaced())
+            if (p.getDirection() == d)
+                clueList.add(new Pair<Integer, String>(p.getCN(), p.getClue()));
+            for(Pair<Integer, String> p: clueList)
+                System.out.println(p.get1());
+        Collections.sort(clueList, new Comparator<Pair<Integer, String>>() {
+            @Override
+            public int compare(Pair<Integer, String> o1, Pair<Integer, String> o2) {
+                if (o1.get1() < o2.get1())
+                    return -1;
+                if (o1.get1() > o2.get1())
+                    return 1;
+                else return 0;
+            }
+        });
+        for(Pair<Integer, String> p: clueList)
+            System.out.println(p.get1());
     }
 
     public static boolean textFieldHere(int a, int b) {
@@ -350,7 +375,7 @@ public class Puzzle extends JPanel implements ActionListener {
     }
 
     public static String selectFile(String t) { //method that prompts the user to select a file and returns the filename.
-        File[] files=new File[0];
+        File[] files = new File[0];
         File folder;
         try {
             System.out.println("Select a file to read the list of words from. \nIf you don't see a file that should be there, make sure it's stored in wordfiles.");
