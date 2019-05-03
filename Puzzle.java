@@ -27,7 +27,6 @@ public class Puzzle extends JPanel implements ActionListener {
     private static JButton save = new JButton("Save");
     private static JButton answerChecker = new JButton("Check Answers");
     private static JButton hint = new JButton("Help Me");
-    private static JButton exit = new JButton("Exit");
     private static boolean loaded = false;
     private static Character[][] loadedMatrix;
     private static Crossword c;
@@ -102,16 +101,10 @@ public class Puzzle extends JPanel implements ActionListener {
                 g.setFont(font);
                 g.setColor(Color.BLUE);
                 g.drawString("Congrats!!", 450, 400);
-                exit.setBounds(550, 460, 100, 50);
-                frame.add(exit);
-            }
+             }
         } else if (src == hint) {
             giveHint();
-        } else if (src==exit) {
-            System.out.println("Thanks for playing!");
-            System.exit(0);
         }
-
     }
 
     public static void giveHint() {
@@ -192,7 +185,7 @@ public class Puzzle extends JPanel implements ActionListener {
 
     @Override
     public void paintComponent(Graphics g) {
-        System.out.println("paintComponent run.");       //test code
+      //  System.out.println("paintComponent run.");       //test code
         answerGrid = c.getGrid();
         ArrayList<Pair<Integer, String>> downClueList = getClues(placedWord.direction.DOWN);
         ArrayList<Pair<Integer, String>> acrossClueList = getClues(placedWord.direction.ACROSS);

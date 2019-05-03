@@ -1,12 +1,10 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 import static java.util.Collections.shuffle;
 
 
 public class Crossword { //the class for generating the answers.
-    public static ArrayList<Character> alphabet = new ArrayList<>(Arrays.asList('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'));
     private Character[][] grid; //stores the final grid
     private int[][] numGrid; //stores the numbers for clues
     private ArrayList<Word> wordsChosen = new ArrayList<Word>(); //the words selected for the puzzle
@@ -19,7 +17,7 @@ public class Crossword { //the class for generating the answers.
     private int seed; //stores the seed. Need to store for save/otherButton function
 
     public Crossword(ArrayList<Word> w, int seed, int size) { //constructor. Potentially will fail to add every word and simply returns before finishing if that happens.
-        this.seed=seed;
+        this.seed = seed;
         ArrayList<Word> chooseFrom = new ArrayList<>();
         for (Word word : w)
             chooseFrom.add(word);
@@ -31,17 +29,17 @@ public class Crossword { //the class for generating the answers.
             wordsChosen.add(chooseFrom.get(r));
             chooseFrom.remove(r);
         }
-        shuffle(w, rand);
+        shuffle(w, rand); //shuffle the words to choose from
         Word f = w.get(0);
         placedWord.direction t;
         if (rand.nextBoolean())
             t = placedWord.direction.ACROSS;
         else t = placedWord.direction.DOWN;
-        placeWord(f.getLetters(), t, 500, 500);
+        placeWord(f.getLetters(), t, 500, 500); //place the first word
         wordsPlaced.add(new placedWord(f.getLetters(), f.getClue(), 500, 500, t));
         ArrayList<Integer> failedToAdd = new ArrayList<Integer>();
         boolean addedAny = true;
-        for (int i = 1; i < size; i++)
+        for (int i = 1; i < size; i++)   //places the rest of the words.
             if (addWord(w.get(i)) == false) {
                 System.out.println("failed to add " + w.get(i).getLetters());
                 failedToAdd.add(i);
@@ -56,7 +54,7 @@ public class Crossword { //the class for generating the answers.
                     addedAny = true;
                 }
             }
-            failedWords = failedToAdd.size();
+            failedWords = failedToAdd.size(); //if any words weren't place, ends now
             if (failedWords > 0) {
                 failed = true;
                 return;
@@ -65,12 +63,12 @@ public class Crossword { //the class for generating the answers.
         shrinkGrid();
 //        System.out.println(grid.length);   //test code
 //        System.out.println(grid[0].length);  //test code
-        if (grid.length > goalSize || grid[0].length > goalSize) {
+        if (grid.length > goalSize || grid[0].length > goalSize) { //if the puzzle made is too big, returns now
             failed = true;
             return;
         }
         growGrid();
-        numGrid = new int[grid.length][grid[0].length];
+        numGrid = new int[grid.length][grid[0].length]; //this section creates the grid of clue numbers
         int num = 0;
         for (int i = 0; i < grid.length; i++)
             for (int j = 0; j < grid[i].length; j++) {
@@ -84,22 +82,22 @@ public class Crossword { //the class for generating the answers.
                     }
                 }
             }
-        }
+    }
 
 
     private void growGrid() {//grows the grid into the correct size. Leaves the first row and first column empty as buffer
-        Character[][] grownGrid = new Character[goalSize+2][goalSize+2];
-        for(int i=0;i<grid.length;i++)
-            for(int j=0;j<grid[0].length;j++)
-                grownGrid[i+1][j+1]=grid[i][j];
-        grid=grownGrid;
-        for(placedWord p: wordsPlaced) {
+        Character[][] grownGrid = new Character[goalSize + 2][goalSize + 2];
+        for (int i = 0; i < grid.length; i++)
+            for (int j = 0; j < grid[0].length; j++)
+                grownGrid[i + 1][j + 1] = grid[i][j];
+        grid = grownGrid;
+        for (placedWord p : wordsPlaced) {
             p.setX(p.getX() + 1);
-            p.setY(p.getY()+1);
+            p.setY(p.getY() + 1);
         }
     }
 
-    private boolean addWord(Word w) {
+    private boolean addWord(Word w) { //adds word to the puzzle
         ArrayList<Character> letters = new ArrayList<Character>();
         ArrayList<Pair<Integer, Integer>> possibilities = new ArrayList<>();
         ArrayList<Integer> letNum = new ArrayList<>();
@@ -188,6 +186,7 @@ public class Crossword { //the class for generating the answers.
         wordsPlaced = shrunkPlaced;
     }
 
+    @Deprecated
     public static <E> void printMatrix(E[][] m) { //method to print matrix, with null values being printed as spaces. Used for testing
         for (int i = 0; i < m.length; i++) {
             for (int j = 0; j < m[i].length; j++)
@@ -241,15 +240,16 @@ public class Crossword { //the class for generating the answers.
         return numGrid;
     }
 
-    public int getSize(){
+    public int getSize() {
         return wordsPlaced.size();
     }
 
-    public int getSeed(){
+    public int getSeed() {
         return seed;
     }
 
-    public ArrayList<placedWord> getWordsPlaced(){return wordsPlaced;
+    public ArrayList<placedWord> getWordsPlaced() {
+        return wordsPlaced;
     }
 }
 
