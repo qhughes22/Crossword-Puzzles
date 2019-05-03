@@ -25,8 +25,9 @@ public class Puzzle extends JPanel implements ActionListener {
     private static JFrame frame = new JFrame("Crossword!");
     private static Character[][] answerGrid;
     private static JButton save = new JButton("Save");
-    private static JButton otherButton = new JButton("Check Answers");
-    private static JButton Button3 = new JButton("Help Me");
+    private static JButton answerChecker = new JButton("Check Answers");
+    private static JButton hint = new JButton("Help Me");
+    private static JButton exit = new JButton("Exit");
     private static boolean loaded = false;
     private static Character[][] loadedMatrix;
     private static Crossword c;
@@ -34,6 +35,7 @@ public class Puzzle extends JPanel implements ActionListener {
     private static int timeStarted;
     private static JTextField name = new JTextField();
     private static int hintCount;
+
 
     public static JTextField createFilteredField(String text, int columns) {    //this method was adapted from code found here: https://stackoverflow.com/questions/24844559/jtextfield-using-document-filter-to-filter-integers-and-periods
         JTextField field = new JTextField(text, columns);
@@ -83,13 +85,33 @@ public class Puzzle extends JPanel implements ActionListener {
                 saveTo = name.getText();
             savePuzzle(new int[]{Crossword.originalSeed, c.getSize(), (int) (System.currentTimeMillis()) - timeStarted, hintCount}, convertToMatrix(), "savegames/" + saveTo + ".txt");
             System.out.println("Puzzle saved (unless something else says otherwise).");
-        } else if (src == otherButton) {
-            System.out.println(checkAnswers());
-        } else if (src == Button3) {
+        } else if (src == answerChecker) {
+            if (checkAnswers()) {
+                Graphics g = frame.getGraphics();
+                g.setColor(Color.WHITE);
+                g.drawRect(350, 350, 500, 200);
+                g.fillRect(350, 350, 500, 200);
+                g.setColor(Color.BLACK);
+                int timeMS = (int) (System.currentTimeMillis()) - timeStarted;
+                int minutes = (int) timeMS/60000;
+                int seconds = timeMS/1000%60;
+                g.drawString("Your time was: " + String.valueOf(minutes) + " minutes and " + String.valueOf(seconds) + " seconds.", 460, 440);
+                g.drawString("Your seed was " + c.originalSeed + " if you want to play this puzzle again!", 460, 460);
+                g.drawString("You used " + hintCount + " hints!", 460, 480);
+                Font font = new Font("Courier", Font.BOLD, 50);
+                g.setFont(font);
+                g.setColor(Color.BLUE);
+                g.drawString("Congrats!!", 450, 400);
+                exit.setBounds(550, 460, 100, 50);
+                frame.add(exit);
+            }
+        } else if (src == hint) {
             giveHint();
-        } else {
-            JTextField jt = (JTextField) e.getSource();
+        } else if (src==exit) {
+            System.out.println("Thanks for playing!");
+            System.exit(0);
         }
+
     }
 
     public static void giveHint() {
@@ -123,8 +145,8 @@ public class Puzzle extends JPanel implements ActionListener {
 
     public Puzzle() {
         save.addActionListener(this);
-        otherButton.addActionListener(this);
-        Button3.addActionListener(this);
+        answerChecker.addActionListener(this);
+        hint.addActionListener(this);
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
     }
 
@@ -170,19 +192,22 @@ public class Puzzle extends JPanel implements ActionListener {
 
     @Override
     public void paintComponent(Graphics g) {
-        //   System.out.println("paintComponent run.");       //test code
+        System.out.println("paintComponent run.");       //test code
         answerGrid = c.getGrid();
+        ArrayList<Pair<Integer, String>> downClueList = getClues(placedWord.direction.DOWN);
+        ArrayList<Pair<Integer, String>> acrossClueList = getClues(placedWord.direction.ACROSS);
         super.paintComponent(g);
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, WIDTH, HEIGHT);
         ArrayList<JTextField> tempFields = new ArrayList<>();    //this temporary arraylist may not be necessary, but we included it to protect from changing textFields while it is in use
         save.setBounds(950, 250, 200, 100);
-        otherButton.setBounds(950, 150, 200, 100);
-        Button3.setBounds(950, 50, 200, 100);
+        answerChecker.setBounds(950, 150, 200, 100);
+        hint.setBounds(950, 50, 200, 100);
         frame.add(save);
-        frame.add(otherButton);
-        frame.add(Button3);
+        frame.add(answerChecker);
+        frame.add(hint);
         int counter = 0;
+
         for (int i = 0; i < NUM_SQUARES; i++) {              //DECIDE WHICH SQUARES NEED TO HAVE AN OPENING FOR A LETTER
             for (int j = 0; j < NUM_SQUARES; j++) {
                 if (answerGrid[i][j] == null) {
@@ -226,6 +251,20 @@ public class Puzzle extends JPanel implements ActionListener {
                 }
             }
         }
+
+        g.setColor(Color.WHITE);
+        g.drawString("Type Title of File You Wish to Save Here:", 925, 370);
+        g.drawString("DOWN", 870, 475);
+        for (int i = 0; i < downClueList.size(); i++) {
+            g.drawString(String.valueOf(downClueList.get(i).get1()) + ": " + downClueList.get(i).get2(), 870, 490 + 15 * i);
+        }
+        g.setColor(Color.WHITE);
+        g.drawString("ACROSS", 870, (490 + 15 * downClueList.size() - 1) + 25);
+        for (int j = 0; j < acrossClueList.size(); j++) {
+            g.drawString(String.valueOf(acrossClueList.get(j).get1()) + ": " + acrossClueList.get(j).get2(), 870, (490 + 15 * downClueList.size() - 1) + 40 + 15 * j);
+        }
+
+
         if (loaded == true) convertMatrixToGrid(loadedMatrix);
     }
 
@@ -309,10 +348,10 @@ public class Puzzle extends JPanel implements ActionListener {
 
     public static Character[][] convertToMatrix() {
         Character[][] toReturn = new Character[c.getGrid().length][c.getGrid()[0].length];
-    //    System.out.println("convertToMatrix run."); //test code
+        //    System.out.println("convertToMatrix run."); //test code
         for (JTextField jt : textFields) {
             if (!jt.getText().equals("")) {
-    //            System.out.println("letter found."); //Test code
+                //            System.out.println("letter found."); //Test code
                 Character c = jt.getText().charAt(0); //Gets the text in the textfield
                 int x = getCoords(jt)[0];
                 int y = getCoords(jt)[1];
@@ -343,7 +382,7 @@ public class Puzzle extends JPanel implements ActionListener {
             hintCount = 0;
         }
         loadedMatrix = loaded.get1();
-        timeStarted = timeStarted - loadedInts.get(2);
+        timeStarted = (int) System.currentTimeMillis() - loadedInts.get(2);
     }
 
 
@@ -577,8 +616,8 @@ public class Puzzle extends JPanel implements ActionListener {
             System.out.println("Error in grid in saved file (found a character that shouldn't be there). \nSorry, but something seems to have corrupted it.");
             System.exit(1);
         }
-     //   Crossword.printMatrix(charToReturn); //test code
-     //   System.out.println(intToReturn.size()); //test code
+        //   Crossword.printMatrix(charToReturn); //test code
+        //   System.out.println(intToReturn.size()); //test code
         return new Pair<>(charToReturn, intToReturn);
     }
 }
